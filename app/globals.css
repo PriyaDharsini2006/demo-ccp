@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+:root {
+  --bg-color-light: #f0f0f0;
+  --bg-color-dark: #121212;
+  --text-color-light: #333;
+  --text-color-dark: #eee;
+}
+
+[data-theme="light"] {
+  background-color: var(--bg-color-light);
+  color: var(--text-color-light);
+}
+
+[data-theme="dark"] {
+  background-color: var(--bg-color-dark);
+  color: var(--text-color-dark);
+}
+
+@layer components {
+  .hidden-scrollbar {
+    @apply overflow-hidden; /* Optional: hides scrollbar but still scrolls */
+  }
+  .hidden-scrollbar::-webkit-scrollbar {
+    display: none; /* WebKit browsers */
+  }
+  .hidden-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+}
