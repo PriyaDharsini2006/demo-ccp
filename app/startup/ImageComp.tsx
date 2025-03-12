@@ -34,7 +34,8 @@ const ImageComp = ({ url, id }: { url: string; id: string }) => {
         />
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 transition-opacity duration-300 hover:opacity-100">
           <CldUploadButton
-            uploadPreset="klhusdyw"
+            uploadPreset="name11"
+            options={{ cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             onSuccess={handleUpload}
             onClose={() => router.refresh()}
             className="bg-white text-black py-2 px-4 rounded-lg shadow-lg"

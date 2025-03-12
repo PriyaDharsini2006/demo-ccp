@@ -16,15 +16,13 @@ const Page = async ({
 
   const startup = await prisma.startup.findUnique({
     where: { id: startupId },
-    include: { gstInfo: true },
+    
   });
 
   if (!startup) {
     return <div>Startup not found</div>;
   }
-  if (!startup.gstInfo?.id) {
-    return <div>No GST Info ID found</div>;
-  }
+  
 
   const invoices = await prisma.invoice.findMany({
     where: { gstInfoId: startup.gstInfo?.id },

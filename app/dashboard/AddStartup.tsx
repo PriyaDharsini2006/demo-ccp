@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Dialog, Flex, TextArea, TextField } from "@radix-ui/themes";
+import { Button, Dialog, Flex, TextArea, Text } from "@radix-ui/themes";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,7 +16,7 @@ const AddStartup = ({ id }: { id: string }) => {
 
   const handleSubmit = async () => {
     await axios
-      .post("/api/user/startup", { id, name, desc, gstIn, mantra })
+      .post("/api/user/startup", { id, name, desc,mantra })
       .catch(() => toast.error("Unable to create Startup"))
       .then(() => {
         toast.success("Startup created");
@@ -36,7 +36,9 @@ const AddStartup = ({ id }: { id: string }) => {
         </Flex>
         <Dialog.Content size="3">
           <Flex direction="column" gap="3">
-            <TextField.Root
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-md"
               placeholder="Name of the Startup"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -55,12 +57,7 @@ const AddStartup = ({ id }: { id: string }) => {
               rows={4}
               required
             />
-            <TextField.Root
-              placeholder="GST IN Number of the startup"
-              value={gstIn}
-              onChange={(e) => setGstIn(e.target.value)}
-              required
-            />
+            
             <Flex justify="center" gap="3" className="mt-4">
               <Dialog.Close>
                 <Button color="green" variant="soft" onClick={handleSubmit}>

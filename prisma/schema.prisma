@@ -19,17 +19,11 @@ model User {
   image       String?
 }
 
-model GSTInfo {
-  id       String    @id @default(uuid())
-  gstin    String    @unique // GST Identification Number
-  invoices Invoice[] // Reference to multiple GST invoice records
-  startups Startup[] // Reference to multiple Startups
-}
+
 
 model Invoice {
   id           String   @id @default(uuid())
   gstInfoId    String
-  gstInfo      GSTInfo  @relation(fields: [gstInfoId], references: [id], onDelete: Cascade)
   retPeriod    DateTime
   checksum     String?
   summaryType  String?
@@ -52,9 +46,9 @@ model Startup {
   imageURL    String?
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gstin       String?       @unique
+   
   overview    Overview?
-  gstInfo     GSTInfo?      @relation(fields: [gstin], references: [gstin], onDelete: SetNull)
+  
 }
 
 enum UserType {

@@ -6,12 +6,22 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Validate the request body
-    if (!body.name || !body.desc || !body.id || !body.gstIn || !body.mantra) {
+    if (!body.name || !body.desc || !body.id || !body.mantra) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
     }
+    const userExists = await prisma.user.findUnique({
+      where: { id: body.id },
+    });
+    if (!userExists) {
+      return NextResponse.json(
+        { message: "User does not exist" },
+        { status: 400 }
+      );
+    }
+    
 
     // Create the startup record
     const startup = await prisma.startup.create({
@@ -19,7 +29,6 @@ export async function POST(req: NextRequest) {
         name: body.name,
         description: body.desc,
         userId: body.id,
-        gstin: body.gstIn,
         mantra: body.mantra,
       },
     });
@@ -28,11 +37,11 @@ export async function POST(req: NextRequest) {
       { message: "Startup Created Successfully", startup },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error:any) {
     console.error("Error creating startup:", error);
 
     return NextResponse.json(
-      { message: "Error while creating the record" },
+      { message: "Error while creating the record", error: error.message },
       { status: 500 }
     );
   }
