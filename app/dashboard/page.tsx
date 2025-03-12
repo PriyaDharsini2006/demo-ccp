@@ -8,45 +8,9 @@ import ListStartups from "./ListStartups";
 import AddStartup from "./AddStartup";
 import ListInnovation from "./ListInnovation";
 import AddInnovation from "./AddInnovation";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
 
 const Dashboard = async () => {
-  const session = useSession(); 
   const session = await getServerSession();
-   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (session.status === "authenticated" && session.data?.user?.email) {
-        try {
-          // Make an API call to check if the user's email exists in the admin table
-          const response = await fetch('/api/check-admin', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email: session.data.user.email }),
-          });
-          
-          const data = await response.json();
-          
-          if (data.isAdmin) {
-            // Redirect to admin page if user is an admin
-            window.location.href = '/admin';
-            return;
-          }
-          
-          // If not admin, redirect to dashboard (as in your original code)
-          redirect('/dashboard');
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-          // Fall back to dashboard redirect if there's an error
-          redirect('/dashboard');
-        }
-      }
-      
-      setIsLoading(false);
-    };
 
   if (!session) redirect("/signin");
 
