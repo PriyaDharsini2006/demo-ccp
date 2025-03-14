@@ -1,10 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model User {
@@ -13,13 +13,11 @@ model User {
   email       String       @unique
   password    String
   userType    UserType
-  startups    Startup[]    // One-to-many relationship with Startup
-  innovations Innovation[] // One-to-many relationship with Innovation
-  session     Session?
   image       String?
+  innovations Innovation[]
+  session     Session?
+  startups    Startup[]
 }
-
-
 
 model Invoice {
   id           String   @id @default(uuid())
@@ -45,10 +43,42 @@ model Startup {
   mission     String?
   imageURL    String?
   userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-   
   overview    Overview?
-  
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  sessionToken String   @unique
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Innovation {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  detailedDesc String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  innovatorId  String
+  innovator    User     @relation(fields: [innovatorId], references: [id], onDelete: Cascade)
+}
+
+model Overview {
+  id              String  @id @default(uuid())
+  noOfEmployees   Int
+  currentProjects Int
+  prevProjects    Int
+  fundsRaised     Int
+  startupId       String  @unique
+  startup         Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id    Int    @id @default(autoincrement())
+  email String @unique
 }
 
 enum UserType {
@@ -70,38 +100,4 @@ enum Domain {
   EDUCATION
   ECOMMERCE
   OTHER
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  sessionToken String   @unique
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Innovation {
-  id           String   @id @default(uuid())
-  title        String
-  description  String
-  detailedDesc String? // Detailed description of the innovation
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  innovatorId  String
-  innovator    User     @relation(fields: [innovatorId], references: [id], onDelete: Cascade)
-}
-
-model Overview {
-  id              String  @id @default(uuid())
-  noOfEmployees   Int
-  currentProjects Int
-  prevProjects    Int
-  fundsRaised     Int
-  startupId       String  @unique
-  startup         Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
-}
-
-model Admin {
-  id    Int    @id @default(autoincrement())
-  email String @unique
 }

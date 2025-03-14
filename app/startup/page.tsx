@@ -24,9 +24,7 @@ const Page = async ({
   }
   
 
-  const invoices = await prisma.invoice.findMany({
-    where: { gstInfoId: startup.gstInfo?.id },
-  });
+  
 
   return (
     <Flex className="p-4 w-full" gap="6">
@@ -39,7 +37,7 @@ const Page = async ({
         <EditInfo startup={startup} />
       </Flex>
       <Flex direction={"column"} gap={"3"} className="w-7/12">
-        <Performance invoices={invoices} />
+        
         <Essentials id={startupId} />
         <Tooltip content="Support by giving funds">
           <Button color="green" variant="soft">

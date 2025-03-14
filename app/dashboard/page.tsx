@@ -20,6 +20,7 @@ const Dashboard = async () => {
             Explore startups, innovations, research projects, and IPR applications. 
             Use the navigation bar above to browse different sections or create new entries.
           </p>
+          <p>{session?.user?.id}</p>
         </Flex>
       </Card>
     </div>

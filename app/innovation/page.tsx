@@ -3,13 +3,14 @@ import React from "react";
 import InfoBar from "./InfoBar";
 import { getServerSession } from "next-auth";
 import prisma from "@/prisma/client";
+import authOptions from "../api/auth/[...nextauth]/authOptions";
 
 const Innovation = async ({
   searchParams,
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) => {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   const innovation = await prisma.innovation.findUnique({
     where: { id: String(searchParams?.id) },
   });

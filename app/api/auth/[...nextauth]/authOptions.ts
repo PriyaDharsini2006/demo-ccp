@@ -54,21 +54,24 @@ const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  callbacks: {
-    async jwt({ token, user }) {
+  callbacks:{
+    jwt: ({ token, user }: any) => {
+      console.log(token)
+
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
+        token.id = user.id; // ✅ Ensure token stores user.id
       }
+      console.log("After jwt callback:", token);
       return token;
     },
-    async session({ session, token }) {
-      session.user = {
-        id: token.id as string,
-        email: token.email as string | null,
-      };
+    session: ({ session, token }: any) => {
+      if (session?.user) {
+        console.log("Before session callback:", session);
+        session.user.id = token.id;  // ✅ Use `token.id`
+      }
+      console.log("After session callback:", session);
       return session;
-    },
+    }
   },
   secret: process.env.NEXTAUTH_SECRET, // Set this in your .env file
   debug: process.env.NODE_ENV === "development",

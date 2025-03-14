@@ -4,6 +4,7 @@ import prisma from "@/prisma/client";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log(body)
 
     // Validate the request body
     if (!body.name || !body.desc || !body.id || !body.mantra) {

@@ -9,7 +9,7 @@ import "server-only";
 const Signin = async () => {
   const session = await getServerSession();
 
-  if (session) redirect("/");
+  if (session) redirect("/dashboard");
 
   return (
     <div className="flex flex-col gap-4 py-6 bg-gray-50 dark:bg-gray-900">

@@ -10,7 +10,7 @@ import { IoIosAdd } from "react-icons/io";
 const AddStartup = ({ id }: { id: string }) => {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [gstIn, setGstIn] = useState("");
+  
   const [mantra, setMantra] = useState("");
   const router = useRouter();
 
