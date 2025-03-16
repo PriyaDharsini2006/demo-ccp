@@ -14,7 +14,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { start } from "repl";
 
 const softwareTypes = [
   { value: "APPLICATION", label: "Application" },
@@ -33,8 +32,9 @@ const domains = [
 
 const EditInfo = ({ startup }: { startup: any }) => {
   const session = useSession();
+  const router = useRouter();
 
-  const [Name, setName] = useState(startup.name);
+  const [name, setName] = useState(startup.name);
   const [description, setDescription] = useState(startup.description);
   const [type, setType] = useState(startup.type || "");
   const [domain, setDomain] = useState(startup.domain || "");
@@ -44,20 +44,23 @@ const EditInfo = ({ startup }: { startup: any }) => {
   const id = startup.id;
 
   const handleSave = async () => {
-    await axios
-      .put("/api/user/startup", {
+    try {
+      const response = await axios.put("/api/user/startup", {
         id,
-        Name,
+        name, // Changed from 'Name' to 'name' to match API
         description,
         type,
         domain,
         vision,
         mission,
-      })
-      .catch(() => toast.error("Error while Updating content"))
-      .then(() => {
-        toast.success("Information Updated");
       });
+
+      toast.success("Information Updated");
+      router.refresh(); // Refresh the page to show updated data
+    } catch (error) {
+      console.error("Error updating startup:", error);
+      toast.error("Error while updating content");
+    }
   };
 
   if (
@@ -65,6 +68,7 @@ const EditInfo = ({ startup }: { startup: any }) => {
     session.data.user.id !== startup.userId
   )
     return null;
+
   return (
     <Dialog.Root>
       <Dialog.Trigger>
@@ -78,7 +82,7 @@ const EditInfo = ({ startup }: { startup: any }) => {
               Name:
             </Text>
             <TextField.Root
-              value={Name}
+              value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </Flex>

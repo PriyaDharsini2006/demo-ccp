@@ -2,6 +2,34 @@ import prisma from "@/prisma/client";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+// Add these type declarations to ensure TypeScript recognizes custom fields
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string | null;
+      isAdmin: boolean;
+      userType?: string;
+    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    isAdmin: boolean;
+    userType?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    email: string;
+    isAdmin: boolean;
+    userType?: string;
+  }
+}
+
 const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -10,7 +38,7 @@ const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing email or password");
         }
@@ -26,7 +54,7 @@ const authOptions: NextAuthOptions = {
             return {
               id: admin.id.toString(),
               email: admin.email,
-              isAdmin: true, // Flag to identify admin users
+              isAdmin: true,
             };
           }
           throw new Error("Invalid admin credentials");
@@ -46,7 +74,7 @@ const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user.id,
+          id: user.id.toString(), // Ensure ID is always a string
           email: user.email,
           userType: user.userType,
           isAdmin: false,
@@ -59,6 +87,7 @@ const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -66,23 +95,21 @@ const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.isAdmin = user.isAdmin;
-        if (!user.isAdmin) {
+        if (!user.isAdmin && user.userType) {
           token.userType = user.userType;
         }
       }
       return token;
     },
     async session({ session, token }) {
-      session.user = {
-        id: token.id as string,
-        email: token.email as string | null,
-        isAdmin: token.isAdmin as boolean,
-      };
-
-      if (!token.isAdmin) {
-        session.user.userType = token.userType as string;
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.isAdmin = token.isAdmin;
+        if (!token.isAdmin && token.userType) {
+          session.user.userType = token.userType;
+        }
       }
-
       return session;
     },
   },

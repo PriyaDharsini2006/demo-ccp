@@ -8,51 +8,107 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import React, { useState } from "react";
-import { toast } from "react-hot-toast"; // Add this for notifications
 
-const InfoBar = ({
-  innovation,
-  userId,
-}: {
-  innovation: any;
-  userId: string;
-}) => {
+// Ensure credentials are included with requests
+axios.defaults.withCredentials = true;
+
+const InfoBar = ({ innovation }: { innovation: any }) => {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [title, setTitle] = useState(innovation.title);
   const [description, setDescription] = useState(innovation.description);
   const [detailedDesc, setDetailedDesc] = useState(
     innovation.detailedDesc || "",
   );
-  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+
+  // Debug session info
+  useEffect(() => {
+    console.log("Current session status:", status);
+    console.log("Session data:", session);
+    console.log("Innovation data:", innovation);
+  }, [session, status, innovation]);
+
+  // Check ownership when session or innovation changes
+  useEffect(() => {
+    if (session?.user?.id && innovation?.innovatorId) {
+      const sessionUserId = String(session.user.id);
+      const innovatorId = String(innovation.innovatorId);
+      console.log("Checking ownership:", { sessionUserId, innovatorId });
+      setIsOwner(sessionUserId === innovatorId);
+    } else {
+      setIsOwner(false);
+    }
+  }, [session, innovation]);
 
   const handleSave = async () => {
+    // Validate required data
+    if (!innovation.id) {
+      toast.error("Missing innovation ID");
+      return;
+    }
+
+    // Check authentication status
+    if (status !== "authenticated") {
+      toast.error("You must be logged in to update this innovation");
+      return;
+    }
+
     try {
-      const response = await fetch("/api/innovations", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      setIsLoading(true);
+
+      console.log("Sending update request with data:", {
+        id: innovation.id,
+        title,
+        description,
+        detailedDesc,
+      });
+
+      // Make API request
+      const response = await axios.put(
+        "/api/user/innovation",
+        {
           id: innovation.id,
           title,
           description,
           detailedDesc,
-        }),
-      });
+        },
+        {
+          withCredentials: true, // Ensure cookies are sent for authentication
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      if (response.ok) {
-        toast.success("Innovation updated successfully");
-        setOpen(false);
-        // Force refresh the page to see updated data
-        window.location.reload();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData || "Failed to update innovation");
-      }
-    } catch (error) {
+      console.log("API Response:", response.data);
+      toast.success("Innovation updated successfully!");
+      router.refresh(); // Refresh the page to show updated data
+
+      // Close dialog on success
+      const closeButton = document.querySelector(
+        '[aria-label="Close"]',
+      ) as HTMLButtonElement;
+      if (closeButton) closeButton.click();
+    } catch (error: any) {
       console.error("Error updating innovation:", error);
-      toast.error("An error occurred while updating");
+      const errorMessage =
+        error.response?.data?.error || "Failed to update innovation";
+      toast.error(errorMessage);
+
+      // Log additional error details
+      if (error.response) {
+        console.log("Error status:", error.response.status);
+        console.log("Error details:", error.response.data);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,22 +119,12 @@ const InfoBar = ({
       className="p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg transition-transform transform hover:scale-105"
     >
       <Heading>{innovation.title}</Heading>
-      <Text className="text-gray-700 dark:text-gray-300 font-medium">
-        Description:
-      </Text>
-      <Text className="ml-2">{innovation.description}</Text>
+      <Text>{innovation.description}</Text>
+      {innovation.detailedDesc && <Text>{innovation.detailedDesc}</Text>}
 
-      {innovation.detailedDesc && (
-        <>
-          <Text className="text-gray-700 dark:text-gray-300 font-medium">
-            Detailed Description:
-          </Text>
-          <Text className="ml-2">{innovation.detailedDesc}</Text>
-        </>
-      )}
-
-      {userId === innovation.innovatorId && (
-        <Dialog.Root open={open} onOpenChange={setOpen}>
+      {/* Only show edit button if user is the owner */}
+      {isOwner && (
+        <Dialog.Root>
           <Dialog.Trigger>
             <Button
               variant="solid"
@@ -95,7 +141,7 @@ const InfoBar = ({
                 <TextField.Root
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
+                  className="w-full p-2 border rounded-md border-gray-300 dark:border-gray-700"
                 />
               </Flex>
               <Flex direction="column" gap="2">
@@ -105,8 +151,8 @@ const InfoBar = ({
                 <TextArea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
-                  rows={3}
+                  className="w-full p-2 border rounded-md border-gray-300 dark:border-gray-700"
+                  style={{ minHeight: "80px" }}
                 />
               </Flex>
               <Flex direction="column" gap="2">
@@ -116,17 +162,18 @@ const InfoBar = ({
                 <TextArea
                   value={detailedDesc}
                   onChange={(e) => setDetailedDesc(e.target.value)}
-                  className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
-                  rows={5}
+                  className="w-full p-2 border rounded-md border-gray-300 dark:border-gray-700"
+                  style={{ minHeight: "120px" }}
                 />
               </Flex>
-              <Flex justify="center" gap="3" className="mt-4">
+              <Flex justify="center" gap="3" mt="4">
                 <Button
                   variant="solid"
                   onClick={handleSave}
+                  disabled={isLoading}
                   className="bg-green-500 text-white dark:bg-green-700 hover:bg-green-600 dark:hover:bg-green-800"
                 >
-                  Save Changes
+                  {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
                 <Dialog.Close>
                   <Button
