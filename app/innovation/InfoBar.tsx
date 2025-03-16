@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Button,
   Dialog,
@@ -11,6 +10,7 @@ import {
 } from "@radix-ui/themes";
 import { useSession } from "next-auth/react";
 import React, { useState } from "react";
+import { toast } from "react-hot-toast"; // Add this for notifications
 
 const InfoBar = ({
   innovation,
@@ -22,10 +22,40 @@ const InfoBar = ({
   const [title, setTitle] = useState(innovation.title);
   const [description, setDescription] = useState(innovation.description);
   const [detailedDesc, setDetailedDesc] = useState(
-    innovation.detailedDesc || ""
+    innovation.detailedDesc || "",
   );
+  const [open, setOpen] = useState(false);
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    try {
+      const response = await fetch("/api/innovations", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: innovation.id,
+          title,
+          description,
+          detailedDesc,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Innovation updated successfully");
+        setOpen(false);
+        // Force refresh the page to see updated data
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData || "Failed to update innovation");
+      }
+    } catch (error) {
+      console.error("Error updating innovation:", error);
+      toast.error("An error occurred while updating");
+    }
+  };
+
   return (
     <Flex
       direction="column"
@@ -33,10 +63,22 @@ const InfoBar = ({
       className="p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg transition-transform transform hover:scale-105"
     >
       <Heading>{innovation.title}</Heading>
-      <Text>{innovation.description}</Text>
-      <Text>{innovation.detailedDesc}</Text>
-      {userId == innovation.userId && (
-        <Dialog.Root>
+      <Text className="text-gray-700 dark:text-gray-300 font-medium">
+        Description:
+      </Text>
+      <Text className="ml-2">{innovation.description}</Text>
+
+      {innovation.detailedDesc && (
+        <>
+          <Text className="text-gray-700 dark:text-gray-300 font-medium">
+            Detailed Description:
+          </Text>
+          <Text className="ml-2">{innovation.detailedDesc}</Text>
+        </>
+      )}
+
+      {userId === innovation.innovatorId && (
+        <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger>
             <Button
               variant="solid"
@@ -46,9 +88,9 @@ const InfoBar = ({
             </Button>
           </Dialog.Trigger>
           <Dialog.Content>
-            <Dialog.Title>Edit Innovation Conetents</Dialog.Title>
+            <Dialog.Title>Edit Innovation Contents</Dialog.Title>
             <Flex direction="column" gap="4">
-              <Flex align="center" gap="3">
+              <Flex direction="column" gap="2">
                 <Text className="text-gray-700 dark:text-gray-300">Title:</Text>
                 <TextField.Root
                   value={title}
@@ -56,7 +98,7 @@ const InfoBar = ({
                   className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
                 />
               </Flex>
-              <Flex align="center" gap="3">
+              <Flex direction="column" gap="2">
                 <Text className="text-gray-700 dark:text-gray-300">
                   Description:
                 </Text>
@@ -64,9 +106,10 @@ const InfoBar = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
+                  rows={3}
                 />
               </Flex>
-              <Flex align="center" gap="3">
+              <Flex direction="column" gap="2">
                 <Text className="text-gray-700 dark:text-gray-300">
                   Detailed Description:
                 </Text>
@@ -74,9 +117,10 @@ const InfoBar = ({
                   value={detailedDesc}
                   onChange={(e) => setDetailedDesc(e.target.value)}
                   className="flex-1 p-2 border rounded-md border-gray-300 dark:border-gray-700"
+                  rows={5}
                 />
               </Flex>
-              <Flex justify="center" gap="3">
+              <Flex justify="center" gap="3" className="mt-4">
                 <Button
                   variant="solid"
                   onClick={handleSave}
@@ -89,7 +133,7 @@ const InfoBar = ({
                     color="red"
                     className="bg-red-500 text-white dark:bg-red-700 hover:bg-red-600 dark:hover:bg-red-800"
                   >
-                    Cancel Changes
+                    Cancel
                   </Button>
                 </Dialog.Close>
               </Flex>

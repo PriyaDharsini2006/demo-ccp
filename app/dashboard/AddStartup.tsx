@@ -1,82 +1,125 @@
 "use client";
-
-import { Button, Dialog, Flex, TextArea, TextField } from "@radix-ui/themes";
+import React, { useState } from "react";
+import { Button, Dialog, Flex, TextField, Text } from "@radix-ui/themes";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { IoIosAdd } from "react-icons/io";
+import { toast } from "react-hot-toast";
 
-const AddStartup = ({ id }: { id: string }) => {
+const AddStartup = ({ id }) => {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [gstIn, setGstIn] = useState("");
   const [mantra, setMantra] = useState("");
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleSubmit = async () => {
-    await axios
-      .post("/api/user/startup", { id, name, desc, gstIn, mantra })
-      .catch(() => toast.error("Unable to create Startup"))
-      .then(() => {
-        toast.success("Startup created");
-        router.refresh();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name || !desc || !gstIn || !mantra) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post("/api/user/startup", {
+        name,
+        desc,
+        id,
+        gstIn,
+        mantra,
       });
+
+      if (response.status === 201) {
+        toast.success("Startup created successfully!");
+        setName("");
+        setDesc("");
+        setGstIn("");
+        setMantra("");
+        setOpen(false);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Error creating startup:", error);
+      toast.error(error.response?.data?.message || "Failed to create startup");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <>
-      <Dialog.Root>
-        <Flex direction={"column"} className="md:mx-44">
-          <Dialog.Trigger>
-            <Button>
-              Add Startup <IoIosAdd size="22" />
-            </Button>
-          </Dialog.Trigger>
-        </Flex>
-        <Dialog.Content size="3">
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger>
+        <Button color="blue" variant="soft" size="3">
+          Add Startup
+        </Button>
+      </Dialog.Trigger>
+      <Dialog.Content style={{ maxWidth: 500 }}>
+        <Dialog.Title>Create New Startup</Dialog.Title>
+        <Dialog.Description size="2" mb="4">
+          Fill in the details to create your new startup
+        </Dialog.Description>
+        <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            <TextField.Root
-              placeholder="Name of the Startup"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <TextArea
-              placeholder="Mantra for the startup"
-              value={mantra}
-              onChange={(e) => setMantra(e.target.value)}
-              rows={4}
-              required
-            />
-            <TextArea
-              placeholder="Description of the Startup"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              rows={4}
-              required
-            />
-            <TextField.Root
-              placeholder="GST IN Number of the startup"
-              value={gstIn}
-              onChange={(e) => setGstIn(e.target.value)}
-              required
-            />
-            <Flex justify="center" gap="3" className="mt-4">
+            <label>
+              <Text as="div" size="2" mb="1" weight="bold">
+                Startup Name *
+              </Text>
+              <TextField.Root
+                placeholder="Enter startup name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <Text as="div" size="2" mb="1" weight="bold">
+                Description *
+              </Text>
+              <TextField.Root
+                placeholder="Describe your startup"
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <Text as="div" size="2" mb="1" weight="bold">
+                GST Number *
+              </Text>
+              <TextField.Root
+                placeholder="Enter GST number"
+                value={gstIn}
+                onChange={(e) => setGstIn(e.target.value)}
+                required
+              />
+            </label>
+            <label>
+              <Text as="div" size="2" mb="1" weight="bold">
+                Mantra/Tagline *
+              </Text>
+              <TextField.Root
+                placeholder="Enter a catchy mantra or tagline"
+                value={mantra}
+                onChange={(e) => setMantra(e.target.value)}
+                required
+              />
+            </label>
+            <Flex gap="3" mt="4" justify="end">
               <Dialog.Close>
-                <Button color="green" variant="soft" onClick={handleSubmit}>
-                  Create
-                </Button>
-              </Dialog.Close>
-              <Dialog.Close>
-                <Button color="red" variant="outline">
+                <Button variant="soft" color="gray">
                   Cancel
                 </Button>
               </Dialog.Close>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Startup"}
+              </Button>
             </Flex>
           </Flex>
-        </Dialog.Content>
-      </Dialog.Root>
-    </>
+        </form>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 };
 
