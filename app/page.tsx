@@ -2,16 +2,26 @@
 
 import { Flex, Heading, Skeleton, Text } from "@radix-ui/themes";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const AboutPage = () => {
-  const session = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  if (session.status === "loading") {
+  useEffect(() => {
+    if (status === "authenticated") {
+      // Check if user is admin and redirect accordingly
+      if (session.user.isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") {
     return <Skeleton className="min-h-screen" />;
-  }
-  if (session.status === "authenticated") {
-    redirect("/dashboard");
   }
 
   return (

@@ -1,29 +1,60 @@
 "use client";
-
 import { Button, Flex, TextField } from "@radix-ui/themes";
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { GoSignIn } from "react-icons/go";
 import { IoKeyOutline } from "react-icons/io5";
 import { MdOutlineAlternateEmail } from "react-icons/md";
+import { useRouter } from "next/navigation";
 
 const SigninComp = () => {
   const [mail, setMail] = useState("");
   const [pass, setPass] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    // Check if user is already logged in and redirect accordingly
+    if (session?.user) {
+      if (session.user.isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [session, router]);
 
   const handleSubmit = async () => {
-    if (!mail && !pass) {
-      toast.error("Credentials required");
+    if (!mail || !pass) {
+      toast.error("Email and password are required");
       return;
     }
-    const result = await signIn("credentials", {
-      email: mail,
-      password: pass,
-    }).then((e) => {
-      if (e?.error) toast.error("Error while login");
-      else toast.success("User Logged In");
-    });
+
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email: mail,
+        password: pass,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast.error("Invalid credentials");
+      } else {
+        toast.success("Login successful");
+
+        // The redirect will be handled by the useEffect above
+        // We just need to wait for the session to be updated
+      }
+    } catch (error) {
+      toast.error("An error occurred during login");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,7 +77,6 @@ const SigninComp = () => {
           />
         </TextField.Slot>
       </TextField.Root>
-
       <div className="relative">
         <TextField.Root
           placeholder="Password"
@@ -63,13 +93,16 @@ const SigninComp = () => {
           </TextField.Slot>
         </TextField.Root>
       </div>
-
       <Button
         variant="solid"
         onClick={handleSubmit}
-        className="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+        disabled={isLoading}
+        className={`mt-4 w-full py-2 ${
+          isLoading ? "bg-blue-300" : "bg-blue-500 hover:bg-blue-600"
+        } text-white rounded-lg transition-colors duration-300`}
       >
-        Sign In <GoSignIn size={18} className="ml-2" />
+        {isLoading ? "Signing In..." : "Sign In"}
+        {!isLoading && <GoSignIn size={18} className="ml-2" />}
       </Button>
     </Flex>
   );
