@@ -1,3 +1,4 @@
+// schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -19,7 +20,6 @@ model User {
   session     Session?
   image       String?
 }
-
 
 model GSTInfo {
   id       String    @id @default(uuid())
@@ -57,6 +57,8 @@ model Startup {
   gstin       String?       @unique
   overview    Overview?
   gstInfo     GSTInfo?      @relation(fields: [gstin], references: [gstin], onDelete: SetNull)
+  status      Status        @default(PENDING)
+  fundingDetails FundingDetails?
 }
 
 enum UserType {
@@ -81,6 +83,12 @@ enum Domain {
   OTHER
 }
 
+enum Status {
+  ACCEPTED
+  REJECTED
+  PENDING
+}
+
 model Session {
   id           String   @id @default(uuid())
   userId       String   @unique
@@ -98,6 +106,8 @@ model Innovation {
   updatedAt    DateTime @updatedAt
   innovatorId  String
   innovator    User     @relation(fields: [innovatorId], references: [id], onDelete: Cascade)
+  status       Status   @default(PENDING)
+  fundingDetails FundingDetails?
 }
 
 model Overview {
@@ -111,8 +121,8 @@ model Overview {
 }
 
 model Admin {
-  id    Int    @id @default(autoincrement())
-  email String @unique
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
 }
 
@@ -125,4 +135,25 @@ model Research {
   updatedAt    DateTime @updatedAt
   researcherId String
   researcher   User     @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+  status       Status   @default(PENDING)
+  fundingDetails FundingDetails?
+}
+
+model FundingDetails {
+  id          String   @id @default(uuid())
+  amount      Float
+  currency    String   @default("USD")
+  approvedAt  DateTime @default(now())
+  description String?
+  notes       String?
+  
+  // Relations - only one of these will be set
+  innovationId String? @unique
+  innovation   Innovation? @relation(fields: [innovationId], references: [id], onDelete: Cascade)
+  
+  researchId   String? @unique
+  research     Research? @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  
+  startupId    String? @unique
+  startup      Startup? @relation(fields: [startupId], references: [id], onDelete: Cascade)
 }
