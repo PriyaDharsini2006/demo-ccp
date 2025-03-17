@@ -9,6 +9,8 @@ import ListStartups from "./ListStartups";
 import AddStartup from "./AddStartup";
 import ListInnovation from "./ListInnovation";
 import AddInnovation from "./AddInnovation";
+import ListResearch from "./ListResearch";
+import AddResearch from "./AddResearch";
 
 const Dashboard = async ({ searchParams }) => {
   const session = await getServerSession();
@@ -18,6 +20,7 @@ const Dashboard = async ({ searchParams }) => {
   const category = searchParams?.category || "both"; // Default category shows both types
   const showAddStartup = searchParams?.addStartup === "true";
   const showAddInnovation = searchParams?.addInnovation === "true";
+  const showAddResearch = searchParams?.addResearch === "true";
 
   const user = await prisma.user.findUnique({
     where: {
@@ -26,6 +29,7 @@ const Dashboard = async ({ searchParams }) => {
     include: {
       startups: true,
       innovations: true,
+      researches: true,
     },
   });
 
@@ -79,6 +83,29 @@ const Dashboard = async ({ searchParams }) => {
     });
   }
 
+  // Fetch all researches with detailed info
+  let allResearches = [];
+  if (view === "all" && (category === "both" || category === "researcher")) {
+    allResearches = await prisma.research.findMany({
+      include: {
+        researcher: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  } else if (view === "my") {
+    // Fetch only user's researches
+    allResearches = await prisma.research.findMany({
+      where: {
+        researcherId: user?.id,
+      },
+    });
+  }
+
   return (
     <div className="container mx-auto">
       {/* Navigation Buttons */}
@@ -125,6 +152,20 @@ const Dashboard = async ({ searchParams }) => {
               All Innovators
             </Button>
           </Link>
+          <Link href="?view=all&category=researcher">
+            <Button
+              variant={
+                view === "all" && category === "researcher"
+                  ? "solid"
+                  : "outline"
+              }
+              color={
+                view === "all" && category === "researcher" ? "blue" : "gray"
+              }
+            >
+              All Researchers
+            </Button>
+          </Link>
         </Flex>
 
         <Flex gap="2">
@@ -163,6 +204,17 @@ const Dashboard = async ({ searchParams }) => {
                   Add Innovation
                 </Link>
               </Button>
+              <Button
+                variant={showAddResearch ? "solid" : "outline"}
+                color="blue"
+              >
+                <Link
+                  href={`?view=my&addResearch=true`}
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  Add Research
+                </Link>
+              </Button>
             </>
           )}
         </Flex>
@@ -185,6 +237,16 @@ const Dashboard = async ({ searchParams }) => {
             Create New Innovation
           </Heading>
           <AddInnovation userId={user?.id!} />
+        </Card>
+      )}
+
+      {/* Add Research Form when requested */}
+      {showAddResearch && user && (
+        <Card className="p-6 mb-6">
+          <Heading size="5" align="center" className="mb-4">
+            Create New Research
+          </Heading>
+          <AddResearch userId={user?.id!} />
         </Card>
       )}
 
@@ -252,6 +314,37 @@ const Dashboard = async ({ searchParams }) => {
           </Card>
         )}
 
+        {/* Research Section */}
+        {(category === "both" ||
+          category === "researcher" ||
+          (view === "my" && allResearches.length >= 0)) && (
+          <Card className="p-6 mt-6">
+            <Flex justify="between" align="center" className="mb-4">
+              <Heading size="5">
+                {view === "all" ? "All Researches" : "My Researches"}
+              </Heading>
+              {view === "my" && user && (
+                <Link href={`?view=my&addResearch=true`}>
+                  <Button variant="solid" color="green" size="3">
+                    + Add New Research
+                  </Button>
+                </Link>
+              )}
+            </Flex>
+            <Flex direction="column" gap="6">
+              {allResearches.length > 0 ? (
+                <ListResearch research={allResearches} />
+              ) : (
+                <Box className="p-4 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  {view === "my"
+                    ? "You haven't created any researches yet."
+                    : "No researches found."}
+                </Box>
+              )}
+            </Flex>
+          </Card>
+        )}
+
         {/* Show user info when viewing "My Work" */}
         {view === "my" && (
           <Card className="p-6 mt-6">
@@ -297,6 +390,14 @@ const Dashboard = async ({ searchParams }) => {
                   </Text>
                   <Text size="2" color="gray">
                     Innovations
+                  </Text>
+                </Box>
+                <Box className="text-center">
+                  <Text size="4" weight="bold">
+                    {user?.researches?.length || 0}
+                  </Text>
+                  <Text size="2" color="gray">
+                    Researches
                   </Text>
                 </Box>
               </Flex>

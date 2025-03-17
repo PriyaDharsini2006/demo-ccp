@@ -15,9 +15,11 @@ model User {
   userType    UserType
   startups    Startup[]    // One-to-many relationship with Startup
   innovations Innovation[] // One-to-many relationship with Innovation
+  researches  Research[]   // One-to-many relationship with Research
   session     Session?
   image       String?
 }
+
 
 model GSTInfo {
   id       String    @id @default(uuid())
@@ -61,6 +63,7 @@ enum UserType {
   INVESTOR
   ENTREPRENEUR
   INNOVATOR
+  RESEARCHER
 }
 
 enum SoftwareType {
@@ -111,4 +114,15 @@ model Admin {
   id    Int    @id @default(autoincrement())
   email String @unique
   password String
+}
+
+model Research {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  detailedDesc String?  // Detailed description of the research
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  researcherId String
+  researcher   User     @relation(fields: [researcherId], references: [id], onDelete: Cascade)
 }

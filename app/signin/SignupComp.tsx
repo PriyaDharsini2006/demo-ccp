@@ -1,5 +1,4 @@
 "use client";
-
 import { Button, Flex, Select, TextField } from "@radix-ui/themes";
 import axios from "axios";
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { FaRegUser } from "react-icons/fa";
 import { HiEye, HiEyeOff, HiLogin } from "react-icons/hi";
 import { IoKeyOutline } from "react-icons/io5";
 import { MdOutlineAlternateEmail } from "react-icons/md";
+import { LuFlaskConical } from "react-icons/lu";
 
 const SignupComp = () => {
   const [name, setName] = useState("");
@@ -50,7 +50,6 @@ const SignupComp = () => {
           <FaRegUser size={18} className="text-gray-500 dark:text-gray-300" />
         </TextField.Slot>
       </TextField.Root>
-
       <TextField.Root
         placeholder="sample@gmail.com"
         type="email"
@@ -65,7 +64,6 @@ const SignupComp = () => {
           />
         </TextField.Slot>
       </TextField.Root>
-
       <div className="relative">
         <TextField.Root
           value={pass}
@@ -89,9 +87,8 @@ const SignupComp = () => {
           </button>
         </TextField.Root>
       </div>
-
       <Select.Root
-        defaultValue="INVESTOR"
+        defaultValue="ENTREPRENEUR"
         onValueChange={(value) => setUserType(value)}
         value={userType}
       >
@@ -104,15 +101,23 @@ const SignupComp = () => {
           </Select.Item>
           <Select.Item value="ENTREPRENEUR">Entrepreneur</Select.Item>
           <Select.Item value="INNOVATOR">Innovator</Select.Item>
+          <Select.Item value="RESEARCHER">Researcher</Select.Item>
         </Select.Content>
       </Select.Root>
-
       <Button
         variant="solid"
         onClick={handleSubmit}
-        className="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+        className={`mt-4 w-full py-2 text-white rounded-lg transition-colors duration-300 ${
+          userType === "RESEARCHER"
+            ? "bg-purple-500 hover:bg-purple-600"
+            : "bg-blue-500 hover:bg-blue-600"
+        }`}
       >
-        Signup <HiLogin size={18} className="ml-2" />
+        Signup{" "}
+        {userType === "RESEARCHER" && (
+          <LuFlaskConical size={18} className="ml-2" />
+        )}
+        {userType !== "RESEARCHER" && <HiLogin size={18} className="ml-2" />}
       </Button>
     </Flex>
   );
