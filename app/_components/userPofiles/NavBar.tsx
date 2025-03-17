@@ -54,16 +54,7 @@ export default function Navbar() {
               >
                 Home
               </Link>
-              <Link
-                href="/about"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 ${
-                  pathname === "/about"
-                    ? "border-blue-500 text-gray-900 dark:text-white"
-                    : "border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200"
-                }`}
-              >
-                About
-              </Link>
+              
               {session?.user && !session?.user?.isAdmin && (
                 <Link
                   href="/dashboard"
