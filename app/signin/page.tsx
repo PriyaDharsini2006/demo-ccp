@@ -36,7 +36,7 @@ const Signin = async () => {
         size="4"
         className="text-gray-700 dark:text-gray-300"
       >
-        Unifying Gujarat&apos;s innovation management.
+        Unifying Tamil Nadu&apos;s innovation management.
       </Heading>
       <div className="mx-5 sm:mx-auto sm:max-w-md md:max-w-lg lg:max-w-xl my-6 min-h-[33rem] md:h-full flex flex-col justify-center bg-white dark:bg-gray-800 px-6 py-8 rounded-lg shadow-lg">
         <Callout.Root className="mb-6 border-l-4 border-blue-500 bg-blue-50 dark:bg-gray-700">

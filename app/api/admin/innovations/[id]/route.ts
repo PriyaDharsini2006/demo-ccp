@@ -6,71 +6,108 @@ import prisma from "@/prisma/client";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const id = params.id;
     // Get the session
     const session = await getServerSession(authOptions);
-    
+
     // Check if user is an admin
     if (!session || !session.user || !session.user.email) {
       return NextResponse.json(
         { error: "Unauthorized: You must be logged in" },
-        { status: 401 }
+        { status: 401 },
       );
     }
-    
+
     // Verify admin status
     const admin = await prisma.admin.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email },
     });
-    
+
     if (!admin) {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
-    
+
     // Parse request body
     const body = await req.json();
     const { status, fundingDetails } = body;
-    
+
     // Validate the status value
-    if (status && !['ACCEPTED', 'REJECTED', 'PENDING'].includes(status)) {
+    if (status && !["ACCEPTED", "REJECTED", "PENDING"].includes(status)) {
       return NextResponse.json(
         { error: "Invalid status value" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
-    // Find and update the innovation
-    const updatedInnovation = await prisma.innovation.update({
-      where: { id },
-      data: {
-        status,
-        // Handle fundingDetails as a relation, not a string
-        fundingDetails: fundingDetails ? {
-          upsert: {
-            create: { details: fundingDetails },
-            update: { details: fundingDetails }
-          }
-        } : undefined,
-        updatedAt: new Date()
+
+    // Update status first if needed
+    if (status) {
+      await prisma.innovation.update({
+        where: { id },
+        data: { status, updatedAt: new Date() },
+      });
+    }
+
+    // Handle funding details if provided
+    if (fundingDetails) {
+      // Parse fundingDetails as it might be a string from the frontend
+      const fundingAmount = parseFloat(fundingDetails);
+
+      if (isNaN(fundingAmount)) {
+        return NextResponse.json(
+          { error: "Invalid funding amount" },
+          { status: 400 },
+        );
       }
+
+      // Check if funding details already exist
+      const existingFunding = await prisma.fundingDetails.findUnique({
+        where: { innovationId: id },
+      });
+
+      if (existingFunding) {
+        // Update existing funding details
+        await prisma.fundingDetails.update({
+          where: { id: existingFunding.id },
+          data: {
+            amount: fundingAmount,
+            description: `Funding of ${fundingAmount} approved`,
+          },
+        });
+      } else {
+        // Create new funding details
+        await prisma.fundingDetails.create({
+          data: {
+            amount: fundingAmount,
+            description: `Funding of ${fundingAmount} approved`,
+            innovation: { connect: { id } },
+          },
+        });
+      }
+    }
+
+    // Get updated innovation with funding details
+    const updatedInnovation = await prisma.innovation.findUnique({
+      where: { id },
+      include: { fundingDetails: true },
     });
-    
+
     return NextResponse.json({
       success: true,
       message: "Innovation updated successfully",
-      data: updatedInnovation
+      data: updatedInnovation,
     });
   } catch (error) {
     console.error("Error updating innovation:", error);
     return NextResponse.json(
       { error: "Server error occurred" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
+

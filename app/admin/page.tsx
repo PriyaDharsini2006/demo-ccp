@@ -286,9 +286,7 @@ export default function AdminDashboard() {
                           {research.status}
                         </span>
                       </td>
-                      <td className="p-2 border">
-                        {research.fundingDetails || "Not specified"}
-                      </td>
+                      <td className="p-2 border">{research.fundingDetails}</td>
                       <td className="p-2 border">
                         <button
                           className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
@@ -446,4 +444,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

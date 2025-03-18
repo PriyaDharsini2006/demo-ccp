@@ -8,12 +8,15 @@ import {
   TextArea,
 } from "@radix-ui/themes";
 import ImageComp from "./ImageComp";
+import { Head } from "next/document";
 
 const InfoBar = ({ startup }: { startup: any }) => {
   return (
     <>
       <ImageComp id={startup.id} url={startup.imageURL} />
       <Card>
+        <Heading>{startup.status}</Heading>
+        <Heading>{startup.fundingDetails}</Heading>
         <DataList.Root className="rounded-md">
           <DataList.Item align={"center"}>
             <DataList.Label color="grass">Name</DataList.Label>

@@ -118,7 +118,9 @@ const ResearchInfoBar = ({ research }: { research: any }) => {
     >
       <Heading>{research.title}</Heading>
       <Text>{research.description}</Text>
+      <Text>{research.status}</Text>
       {research.detailedDesc && <Text>{research.detailedDesc}</Text>}
+      <Text></Text>
 
       {/* Only show edit button if user is the owner */}
       {isOwner && (
